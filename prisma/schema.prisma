@@ -1,0 +1,205 @@
+// BorrowBox — Prisma schema
+// Roles are ADMIN + STUDENT only (see PHASE1_PLANNING.md). Ownership of an
+// item is expressed by Item.ownerId, not by a separate "Owner" role — any
+// STUDENT can list items and send borrow requests.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum Condition {
+  NEW
+  GOOD
+  FAIR
+  WORN
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BORROWED
+  RETURNED
+  CANCELLED
+}
+
+enum NotificationType {
+  REQUEST_RECEIVED
+  REQUEST_APPROVED
+  REQUEST_REJECTED
+  ITEM_RETURNED
+  REPORT_SUBMITTED
+  REPORT_STATUS_UPDATED
+}
+
+model User {
+  id            String          @id @default(uuid())
+  name          String
+  email         String          @unique
+  studentId     String?         @unique
+  passwordHash  String
+  role          Role            @default(STUDENT)
+  avatarUrl     String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  items         Item[]          @relation("ItemOwner")
+  requests      BorrowRequest[] @relation("Borrower")
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+   reports       Report[]
+  @@map("users")
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  icon  String?
+  items Item[]
+
+  @@map("categories")
+}
+
+
+
+model Item {
+  id          String    @id @default(uuid())
+  ownerId     String
+  owner       User      @relation("ItemOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  name        String
+  description String
+  condition   Condition
+  imageUrl    String?
+  phoneNumber String
+  socialUrl   String?
+  quantity    Int       @default(1)
+  isAvailable Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  requests    BorrowRequest[]
+
+  @@index([ownerId])
+  @@index([categoryId])
+  @@map("items")
+}
+
+model BorrowRequest {
+  id          String        @id @default(uuid())
+  itemId      String
+  item        Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  borrowerId  String
+  borrower    User          @relation("Borrower", fields: [borrowerId], references: [id], onDelete: Cascade)
+  status      RequestStatus @default(PENDING)
+  requestedAt DateTime      @default(now())
+  decidedAt   DateTime?
+  returnedAt  DateTime?
+  note        String?
+
+  notifications Notification[]
+
+  @@index([itemId])
+  @@index([borrowerId])
+  @@map("borrow_requests")
+}
+
+model Notification {
+  id                String            @id @default(uuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              NotificationType
+  message           String
+  isRead            Boolean           @default(false)
+  relatedRequestId  String?
+  relatedRequest    BorrowRequest?    @relation(fields: [relatedRequestId], references: [id], onDelete: SetNull)
+  relatedReportId   String?
+  createdAt         DateTime          @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("activity_logs")
+}
+
+enum ReportPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ReportStatus {
+  RECEIVED
+  UNDER_REVIEW
+  NEED_MORE_INFO
+  RESOLVED
+  CLOSED
+  REJECTED
+}
+
+enum ReportCategory {
+  BUG_REPORT
+  APP_CRASH
+  UI_DISPLAY_ISSUE
+  FEATURE_REQUEST
+  PERFORMANCE_ISSUE
+  LOGIN_PROBLEM
+  BORROW_REQUEST_ISSUE
+  ITEM_LISTING_ISSUE
+  NOTIFICATION_ISSUE
+  SCAM_OR_FRAUD
+  FAKE_LISTING
+  HARASSMENT_OR_ABUSE
+  INAPPROPRIATE_CONTENT
+  SPAM
+  ACCOUNT_ISSUE
+  SECURITY_CONCERN
+  PRIVACY_CONCERN
+  PAYMENT_ISSUE
+  OTHER
+}
+
+model Report {
+  id            String         @id @default(uuid())
+  referenceCode String         @unique // e.g. BB-2026-000123
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      ReportCategory
+  priority      ReportPriority @default(MEDIUM)
+  description   String
+  email         String
+  relatedItemId String?
+  attachments   String[]       @default([])
+  status        ReportStatus   @default(RECEIVED)
+  adminReply    String?
+  respondedAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+  @@map("reports")
+}

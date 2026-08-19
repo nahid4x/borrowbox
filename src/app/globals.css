@@ -1,0 +1,217 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap");
+@import "tailwindcss";
+
+/*
+  BorrowBox design tokens — dark glass system.
+  See DESIGN_STYLE_GUIDE.md for the full rationale behind each choice
+  (overlay opacity, where glow is allowed, etc). This file is the single
+  source of truth for color/radius/shadow/motion — every component should
+  read from these variables instead of hardcoding values.
+*/
+@theme {
+  --color-bg-0: #07080c;
+  --color-bg-1: #0a0b11;
+  --color-bg-2: #0d0e16;
+
+  --color-glass: rgba(255, 255, 255, 0.035);
+  --color-glass-hi: rgba(255, 255, 255, 0.06);
+  --color-border: rgba(255, 255, 255, 0.09);
+  --color-border-hi: rgba(255, 255, 255, 0.18);
+
+  --color-accent: #5b8fff;
+  --color-accent-light: #8fb3ff;
+  --color-accent-dim: rgba(91, 143, 255, 0.14);
+  --color-accent-glow: rgba(91, 143, 255, 0.4);
+
+  --color-text-hi: #f5f6fa;
+  --color-text-mid: rgba(235, 237, 245, 0.62);
+  --color-text-low: rgba(235, 237, 245, 0.38);
+  --color-text-floor: rgba(235, 237, 245, 0.22);
+
+  --color-success: #6fe0a6;
+  --color-success-dim: rgba(111, 224, 166, 0.14);
+  --color-warn: #f0b06c;
+  --color-warn-dim: rgba(240, 176, 108, 0.14);
+  --color-danger: #f28b8b;
+  --color-danger-dim: rgba(242, 139, 139, 0.14);
+
+  --radius-pill: 999px;
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-md: 14px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --shadow-card: 0 24px 60px -24px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--color-bg-0);
+    color: var(--color-text-hi);
+    font-family: var(--font-body);
+  }
+  ::selection {
+    background: rgba(91, 143, 255, 0.35);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent-light);
+    outline-offset: 3px;
+    border-radius: 8px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .font-mono-ui {
+    font-family: var(--font-mono);
+  }
+
+  .text-mid {
+    color: var(--color-text-mid);
+  }
+  .text-low {
+    color: var(--color-text-low);
+  }
+
+  /* Glass surface — the base material every card/panel/nav shares. */
+  .glass-surface {
+    background: linear-gradient(160deg, var(--color-glass-hi), var(--color-glass));
+    border: 1px solid var(--color-border);
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    box-shadow: var(--shadow-card);
+  }
+  .glass-surface:hover {
+    border-color: var(--color-border-hi);
+  }
+
+  /* Hairline highlight at the top edge — the one signature glass detail
+     carried over from the reference, kept subtle. */
+  .glass-hairline {
+    position: relative;
+  }
+  .glass-hairline::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.35s var(--ease-out) both;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-glass) 25%,
+      var(--color-glass-hi) 37%,
+      var(--color-glass) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.5s ease infinite;
+  }
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0 50%;
+    }
+  }
+}
+
+select option {
+  color: #111827;
+  background-color: #ffffff;
+}
+
+/* 3D cube spinner logo — color follows --color-accent-light automatically */
+.mark .spinner {
+  width: 22px;
+  height: 22px;
+  --clr: var(--color-accent-light);
+  --clr-alpha: color-mix(in srgb, var(--color-accent-light) 14%, transparent);
+  animation: spinner 1.6s infinite ease;
+  transform-style: preserve-3d;
+  position: relative;
+  flex-shrink: 0;
+}
+.mark .spinner > div {
+  background-color: var(--clr-alpha);
+  height: 100%;
+  position: absolute;
+  width: 100%;
+  border: 1.8px solid var(--clr);
+  border-radius: 2px;
+}
+.mark .spinner div:nth-of-type(1) {
+  transform: translateZ(-11px) rotateY(180deg);
+}
+.mark .spinner div:nth-of-type(2) {
+  transform: rotateY(-270deg) translateX(50%);
+  transform-origin: top right;
+}
+.mark .spinner div:nth-of-type(3) {
+  transform: rotateY(270deg) translateX(-50%);
+  transform-origin: center left;
+}
+.mark .spinner div:nth-of-type(4) {
+  transform: rotateX(90deg) translateY(-50%);
+  transform-origin: top center;
+}
+.mark .spinner div:nth-of-type(5) {
+  transform: rotateX(-90deg) translateY(50%);
+  transform-origin: bottom center;
+}
+.mark .spinner div:nth-of-type(6) {
+  transform: translateZ(11px);
+}
+@keyframes spinner {
+  0% {
+    transform: rotate(45deg) rotateX(-25deg) rotateY(25deg);
+  }
+  50% {
+    transform: rotate(45deg) rotateX(-385deg) rotateY(25deg);
+  }
+  100% {
+    transform: rotate(45deg) rotateX(-385deg) rotateY(385deg);
+  }
+}
+@keyframes pulse-once {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.animate-pulse-once {
+  animation: pulse-once 1s ease-in-out 2;
+}

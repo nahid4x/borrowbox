@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "items" ADD COLUMN     "quantity" INTEGER NOT NULL DEFAULT 1,
+ALTER COLUMN "phoneNumber" DROP DEFAULT;
