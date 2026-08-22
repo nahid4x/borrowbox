@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Toaster } from "sonner";
+import Script from "next/script";
 
 export const metadata = {
     title: "BorrowBox — Share What You Have, Borrow What You Need",
@@ -31,6 +32,8 @@ export default function RootLayout({ children }) {
                         fontFamily: "var(--font-body)",
                     },
                 }} />
+
+                <Script src="/devtools-guard.js" strategy="afterInteractive" />
             </body>
         </html>
     );
